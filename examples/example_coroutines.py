@@ -87,15 +87,15 @@ class ComplexTask(BaseGenerator):
             case context.LOOP:
                 i, j = self._i, self._j
 
-                while i < 5:
-                    print(f'{i=}')
-                    while j < 2:
-                        print(f'{j=}')
+                if i < 5:
+                    if j < 4:
+                        print(f'{i=} {j=}')
                         self._j += 1
                         return From(AsyncSleep(.1))
-                    self._j = 0
-                    self._i += 1
-                    return From(AsyncSleep(.2))
+                    else:
+                        self._j = 0
+                        self._i += 1
+                        return From(AsyncSleep(.2))
 
                 self._context_position = context.AFTER_LOOP
             case context.AFTER_LOOP:
