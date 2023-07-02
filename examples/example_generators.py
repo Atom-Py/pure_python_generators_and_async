@@ -1,6 +1,6 @@
 from typing import Callable, Iterable
 
-from generator import BaseGenerator, YieldFrom
+from generator import BaseGenerator, From
 
 
 class MyRange(BaseGenerator):
@@ -43,7 +43,7 @@ class Godless(BaseGenerator):
     def _next(self):
         if self._context_position == 0:
             self._context_position += 1
-            return YieldFrom(Gen1())
+            return From(Gen1())
         raise StopIteration
 
 
@@ -54,7 +54,7 @@ class Gen1(BaseGenerator):
     def _next(self):
         if self._context_position == 0:
             self._context_position += 1
-            return YieldFrom(Gen2())
+            return From(Gen2())
         raise StopIteration
 
 
@@ -65,7 +65,7 @@ class Gen2(BaseGenerator):
     def _next(self):
         if self._context_position == 0:
             self._context_position += 1
-            return YieldFrom(MyRange(0, 10))
+            return From(MyRange(0, 10))
         raise StopIteration
 
 

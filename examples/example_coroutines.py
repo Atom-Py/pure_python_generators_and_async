@@ -1,7 +1,7 @@
-from enum import StrEnum, auto
+from enum import Enum
 from time import time
 
-from generator import BaseGenerator, YieldFrom
+from generator import BaseGenerator, From
 from coroutine import EventLoop
 
 
@@ -35,12 +35,12 @@ class SomeTask(BaseGenerator):
         if context_position == 0:
             print('Started SomeTask')
             self._context_position += 1
-            return YieldFrom(AsyncSleep(15))
+            return From(AsyncSleep(15))
 
         if context_position == 1:
             print('Middle of SomeTask')
             self._context_position += 1
-            return YieldFrom(AsyncSleep(2))
+            return From(AsyncSleep(2))
 
         print('Finished SomeTask')
 
@@ -48,53 +48,66 @@ class SomeTask(BaseGenerator):
 
 
 class ComplexTask(BaseGenerator):
-    class ContextPosition(StrEnum):
-        FIRST = auto()
-        LOOP = auto()
-        AFTER = auto()
-        LAST = auto()
+    class Context(Enum):
+        START = 1
+        LOOP = 2
+        AFTER_LOOP = 3
+        FINISH = 4
 
     def __init__(self):
-        self._context_position = ComplexTask.ContextPosition.FIRST
+        self._context_position = self.Context.START
 
     def _next(self):
         """
         print('Started ComplexTask')
         await sleep(5)
+
         print('Looping ComplexTask')
         for i in range(5):
-            print(i)
-            await sleep(.1)
+            print(f'{i=}')
+            for j in range(2):
+                print(f'{j=}')
+                await sleep(.1)
+            await sleep(.2)
+
         await sleep(2)
+
         print('Finished ComplexTask')
         return 'Very Important Value'
         """
 
-        if self._context_position == ComplexTask.ContextPosition.FIRST:
-            print('Started ComplexTask')
-            self._context_position = ComplexTask.ContextPosition.LOOP
-            self._loop_counter = 0
-            return YieldFrom(AsyncSleep(5))
+        context = self.Context
 
-        if self._context_position == ComplexTask.ContextPosition.LOOP:
-            if self._loop_counter < 5:
-                print('Looping ComplexTask')
-                print(self._loop_counter)
-                self._loop_counter += 1
-                return YieldFrom(AsyncSleep(.1))
+        match self._context_position:
+            case context.START:
+                print('Started ComplexTask')
+                self._context_position = context.LOOP
+                self._i = self._j = 0
+                return From(AsyncSleep(5))
+            case context.LOOP:
+                i, j = self._i, self._j
 
-            self._context_position = ComplexTask.ContextPosition.AFTER
+                while i < 5:
+                    print(f'{i=}')
+                    while j < 2:
+                        print(f'{j=}')
+                        self._j += 1
+                        return From(AsyncSleep(.1))
+                    self._j = 0
+                    self._i += 1
+                    return From(AsyncSleep(.2))
 
-        if self._context_position == ComplexTask.ContextPosition.AFTER:
-            self._context_position = ComplexTask.ContextPosition.LAST
-            return YieldFrom(AsyncSleep(2))
-
-        if self._context_position == ComplexTask.ContextPosition.LAST:
-            print('Finished ComplexTask')
-            stop_iteration = StopIteration()
-            stop_iteration.value = 'Very Important Value'
-
-            raise stop_iteration
+                self._context_position = context.AFTER_LOOP
+            case context.AFTER_LOOP:
+                self._context_position = context.FINISH
+                return From(AsyncSleep(2))
+            case context.FINISH:
+                print('Finished ComplexTask')
+                stop_iteration = StopIteration()
+                stop_iteration.value = 'Very Important Value'
+                raise stop_iteration
+            case _:
+                raise RuntimeError
 
 
 tasks = [

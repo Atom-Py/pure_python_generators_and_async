@@ -38,7 +38,7 @@ class BaseGenerator(ABC):
             self._closed = True
             raise
 
-        if isinstance(r, YieldFrom):
+        if isinstance(r, From):
             self.__yield_from__ = r
             return next(self)
 
@@ -55,7 +55,7 @@ class BaseGenerator(ABC):
         raise NotImplementedError
 
 
-class YieldFrom:
+class From:
     def __init__(self, iterable: Iterable) -> None:
         self._iterator = iter(iterable)
 

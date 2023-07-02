@@ -1,1 +1,1 @@
-from .generator import BaseGenerator, YieldFrom
+from .generator import BaseGenerator, From
